@@ -1,0 +1,41 @@
+# Metro Construction Pipeline — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# ─── Core Computer Vision ─────────────────────────────────────────────────────
+opencv-python>=4.8.0          # Video processing, segmentation, change detection
+opencv-contrib-python>=4.8.0  # SIFT features (needed for georeferencing)
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# ─── Progress & Utilities ─────────────────────────────────────────────────────
+tqdm>=4.65.0                   # Progress bars
+PyYAML>=6.0                    # Config file parsing
+
+# ─── Report Generation ────────────────────────────────────────────────────────
+reportlab>=4.0.0               # PDF reports
+
+# ─── Geospatial (optional but recommended) ────────────────────────────────────
+rasterio>=1.3.0                # GeoTIFF export with CRS
+# pyproj>=3.6.0                # Coordinate reprojection (installed with rasterio)
+
+# ─── Deep Learning Segmentation (optional — only if using ML model) ───────────
+# torch>=2.0.0
+# torchvision>=0.15.0
+# transformers>=4.35.0         # Mask2Former via HuggingFace
+
+# ─── Visualization / Development ──────────────────────────────────────────────
+matplotlib>=3.7.0              # Optional: chart debugging
+
+# ─── Installation Notes ────────────────────────────────────────────────────────
+# 1. Basic setup (heuristic segmentation only):
+#    pip install opencv-python opencv-contrib-python numpy Pillow tqdm PyYAML reportlab
+#
+# 2. With GeoTIFF export:
+#    pip install rasterio
+#
+# 3. With deep learning segmentation (GPU recommended):
+#    pip install torch torchvision transformers
+#
+# 4. GPU acceleration for OpenCV (optional):
+#    Build OpenCV from source with CUDA support, or use:
+#    pip install opencv-python-headless  (for server deployments)

@@ -1,0 +1,66 @@
+2026-03-04 23:15:03,765 [ERROR] pipeline_runner � Config not found: config/pipeline_config.yaml
+2026-03-04 23:15:39,446 [INFO] pipeline_runner � ======================================================================
+2026-03-04 23:15:39,459 [INFO] pipeline_runner � PROCESSING PERIOD: 2024_01  (prev: N/A)
+2026-03-04 23:15:39,459 [INFO] pipeline_runner � ======================================================================
+2026-03-04 23:18:04,737 [INFO] pipeline_runner - ============================================================
+2026-03-04 23:18:04,737 [INFO] pipeline_runner - PERIOD: 2024_01  |  prev: N/A
+2026-03-04 23:18:04,737 [INFO] pipeline_runner - ============================================================
+2026-03-04 23:18:04,737 [INFO] pipeline_runner - STEP 1: Preprocessing & Frame Extraction
+2026-03-04 23:18:06,303 [INFO] 01_preprocess - Stabilizing video (this may take a while)...
+2026-03-04 23:18:43,474 [INFO] 01_preprocess - Stabilized video saved: data\processed\2024_01\frames\stabilized.mp4
+2026-03-04 23:18:43,501 [INFO] 01_preprocess - Video: 1163 frames @ 30.0fps → extracting every 59 frames (~19 frames total)
+2026-03-04 23:18:46,149 [INFO] 01_preprocess - ✓ Extracted 20 frames | Skipped: 0 blurry, 0 duplicates
+2026-03-04 23:18:46,163 [INFO] 01_preprocess -   Metadata saved → data\processed\2024_01\frames\2024_01_frame_metadata.json
+2026-03-04 23:18:46,164 [INFO] pipeline_runner - STEP 2: Georeferencing & Orthomosaic
+2026-03-04 23:18:46,200 [INFO] 02_georeference - Georeferencing 20 frames for period 2024_01
+2026-03-04 23:18:46,200 [INFO] 02_georeference - Building feature-matched orthomosaic (SIFT stitching)...
+2026-03-04 23:18:46,200 [INFO] 02_georeference - Using 20 frames for stitching
+2026-03-04 23:19:11,177 [INFO] 02_georeference - Feature orthomosaic saved: data/processed\2024_01\orthomosaic_2024_01.png (1218×639)
+2026-03-04 23:19:11,228 [INFO] 02_georeference - ✓ Georeferencing complete for 2024_01
+2026-03-04 23:19:11,228 [INFO] pipeline_runner - STEP 3: Semantic Segmentation
+2026-03-04 23:19:11,342 [INFO] 03_segment - Loading orthomosaic: data/processed\2024_01\orthomosaic_2024_01.png
+2026-03-04 23:19:11,367 [INFO] 03_segment - Using heuristic segmenter
+2026-03-04 23:19:11,367 [INFO] 03_segment - Segmenting 1218×639 orthomosaic...
+2026-03-04 23:21:21,388 [INFO] pipeline_runner - ============================================================
+2026-03-04 23:21:21,388 [INFO] pipeline_runner - PERIOD: 2024_01  |  prev: N/A
+2026-03-04 23:21:21,388 [INFO] pipeline_runner - ============================================================
+2026-03-04 23:21:21,388 [INFO] pipeline_runner - STEP 1: Preprocessing & Frame Extraction
+2026-03-04 23:21:21,785 [INFO] 01_preprocess - Video: 1163 frames @ 30.0fps → extracting every 59 frames (~19 frames total)
+2026-03-04 23:21:24,832 [INFO] 01_preprocess - ✓ Extracted 20 frames | Skipped: 0 blurry, 0 duplicates
+2026-03-04 23:21:24,832 [INFO] 01_preprocess -   Metadata saved → data\processed\2024_01\frames\2024_01_frame_metadata.json
+2026-03-04 23:21:24,834 [INFO] pipeline_runner - STEP 2: Georeferencing & Orthomosaic
+2026-03-04 23:21:24,841 [INFO] 02_georeference - Georeferencing 20 frames for period 2024_01
+2026-03-04 23:21:24,841 [INFO] 02_georeference - Building feature-matched orthomosaic (SIFT stitching)...
+2026-03-04 23:21:24,841 [INFO] 02_georeference - Using 20 frames for stitching
+2026-03-04 23:21:38,391 [INFO] 02_georeference - Feature orthomosaic saved: data/processed\2024_01\orthomosaic_2024_01.png (1218×639)
+2026-03-04 23:21:38,454 [INFO] 02_georeference - ✓ Georeferencing complete for 2024_01
+2026-03-04 23:21:38,454 [INFO] pipeline_runner - STEP 3: Semantic Segmentation
+2026-03-04 23:21:38,491 [INFO] 03_segment - Loading orthomosaic: data/processed\2024_01\orthomosaic_2024_01.png
+2026-03-04 23:21:38,524 [INFO] 03_segment - Using heuristic segmenter
+2026-03-04 23:21:38,524 [INFO] 03_segment - Segmenting 1218×639 orthomosaic...
+2026-03-04 23:21:38,693 [WARNING] 03_segment - Zone Z02 bbox [2000, 0, 4000, 2000] is outside orthomosaic (1218x639). Zone will show zero areas. Update the bbox in pipeline_config.yaml.
+2026-03-04 23:21:38,693 [WARNING] 03_segment - Zone Z03 bbox [4000, 0, 6000, 2000] is outside orthomosaic (1218x639). Zone will show zero areas. Update the bbox in pipeline_config.yaml.
+2026-03-04 23:21:38,693 [INFO] 03_segment - ✓ Segmentation complete for 2024_01
+2026-03-04 23:21:38,693 [INFO] 03_segment -   Class areas (m²):
+2026-03-04 23:21:38,708 [INFO] 03_segment -     background               :        933 m² (48.0%)
+2026-03-04 23:21:38,708 [INFO] 03_segment -     concrete_structure       :        181 m² (9.3%)
+2026-03-04 23:21:38,708 [INFO] 03_segment -     steel_rebar              :         32 m² (1.6%)
+2026-03-04 23:21:38,708 [INFO] 03_segment -     earthwork                :        410 m² (21.1%)
+2026-03-04 23:21:38,708 [INFO] 03_segment -     road_surface             :         58 m² (3.0%)
+2026-03-04 23:21:38,708 [INFO] 03_segment -     equipment                :          2 m² (0.1%)
+2026-03-04 23:21:38,708 [INFO] 03_segment -     material_stockpile       :         25 m² (1.3%)
+2026-03-04 23:21:38,708 [INFO] 03_segment -     water_body               :        102 m² (5.2%)
+2026-03-04 23:21:38,708 [INFO] 03_segment -     vegetation               :        203 m² (10.4%)
+2026-03-04 23:21:38,708 [INFO] pipeline_runner - STEP 4: SKIPPED (no previous period)
+2026-03-04 23:21:38,708 [INFO] pipeline_runner - STEP 5: Progress Metrics
+2026-03-04 23:21:38,869 [INFO] 05_metrics - Computing metrics for 2024_01 (vs None)
+2026-03-04 23:21:38,882 [INFO] 05_metrics - Timeline updated: 1 periods tracked
+2026-03-04 23:21:38,882 [INFO] 05_metrics - ✓ Metrics computed for 2024_01
+2026-03-04 23:21:38,882 [INFO] 05_metrics -   Overall completion:  0.0%
+2026-03-04 23:21:38,882 [INFO] 05_metrics -   Activity score:      4.6
+2026-03-04 23:21:38,882 [INFO] pipeline_runner - STEP 6: Report Generation
+2026-03-04 23:21:38,992 [INFO] 06_report_generator - HTML report saved: data\reports\2024_01\progress_report_2024_01.html
+2026-03-04 23:21:38,992 [WARNING] 06_report_generator - reportlab not installed. PDF report skipped. Install: pip install reportlab
+2026-03-04 23:21:38,992 [INFO] 06_report_generator - ✓ Reports generated in: data\reports\2024_01
+2026-03-04 23:21:38,992 [INFO] pipeline_runner - Reports saved: {'html': 'data\\reports\\2024_01\\progress_report_2024_01.html', 'pdf': 'data\\reports\\2024_01\\progress_report_2024_01.pdf'}
+2026-03-04 23:21:38,992 [INFO] pipeline_runner - Period 2024_01 complete in 18s

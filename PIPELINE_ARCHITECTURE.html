@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Metro Construction Pipeline — Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;600;700&display=swap');
+  :root {
+    --bg: #060d1a; --surface: #0d1f35; --surface2: #112240;
+    --border: #1e3a5f; --accent: #38bdf8; --green: #34d399;
+    --yellow: #fbbf24; --red: #f87171; --purple: #a78bfa;
+    --text: #e2e8f0; --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif;
+         min-height: 100vh; padding: 40px 24px; }
+  h1 { text-align: center; font-size: 1.6rem; font-weight: 700; color: var(--accent);
+       letter-spacing: 0.05em; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: var(--muted); font-size: 0.85rem;
+              margin-bottom: 40px; }
+
+  .pipeline { display: flex; flex-direction: column; align-items: center; gap: 0; max-width: 900px; margin: 0 auto; }
+
+  .step {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 28px;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .step:hover { transform: translateX(4px); border-color: var(--accent); }
+
+  .step-header { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+  .step-num { background: var(--accent); color: #000; font-family: 'JetBrains Mono', monospace;
+              font-weight: 700; font-size: 0.8rem; width: 32px; height: 32px;
+              border-radius: 50%; display: flex; align-items: center; justify-content: center;
+              flex-shrink: 0; }
+  .step-title { font-size: 1.05rem; font-weight: 700; color: var(--accent); }
+  .step-subtitle { font-size: 0.75rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  .step-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .step-col h4 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+                  color: var(--muted); margin-bottom: 6px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+         padding: 3px 10px; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;
+         color: var(--text); }
+  .tag.green  { border-color: var(--green);  color: var(--green); }
+  .tag.yellow { border-color: var(--yellow); color: var(--yellow); }
+  .tag.red    { border-color: var(--red);    color: var(--red); }
+  .tag.purple { border-color: var(--purple); color: var(--purple); }
+  .tag.accent { border-color: var(--accent); color: var(--accent); }
+
+  .arrow {
+    width: 2px; height: 36px; background: linear-gradient(to bottom, var(--border), var(--accent));
+    position: relative; margin: 0 auto;
+  }
+  .arrow::after {
+    content: '▼'; position: absolute; bottom: -14px; left: 50%;
+    transform: translateX(-50%); color: var(--accent); font-size: 12px;
+  }
+
+  .io-bar { display: flex; gap: 12px; margin-top: 12px; padding-top: 12px;
+            border-top: 1px solid var(--border); }
+  .io-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+               color: var(--muted); margin-right: 4px; }
+
+  .timing { position: absolute; top: 16px; right: 20px; font-size: 0.7rem;
+             color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  .data-flow {
+    background: var(--surface2); border: 1px dashed var(--border);
+    border-radius: 8px; padding: 6px 14px; font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace; color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .section-header { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em;
+                     color: var(--muted); margin: 32px 0 16px; text-align: center;
+                     width: 100%; }
+
+  .legend { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+             margin-top: 32px; padding: 16px; background: var(--surface);
+             border: 1px solid var(--border); border-radius: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<h1>🚇 Metro Construction Progress Pipeline</h1>
+<div class="subtitle">Bi-Monthly Drone Video Analysis → Automated Progress Report</div>
+
+<div class="pipeline">
+
+  <!-- INPUT -->
+  <div class="data-flow">
+    📹 INPUT &nbsp;|&nbsp; Drone video ~30min @ 30fps (≈54,000 frames) + optional GPS SRT file
+  </div>
+  <div class="arrow"></div>
+
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="timing">~15-25 min</div>
+    <div class="step-header">
+      <div class="step-num">01</div>
+      <div>
+        <div class="step-title">Preprocessing & Frame Extraction</div>
+        <div class="step-subtitle">01_preprocess.py</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="step-col">
+        <h4>Operations</h4>
+        <div class="tags">
+          <span class="tag">Video stabilization (optical flow)</span>
+          <span class="tag">Extract 1 frame / 2 sec</span>
+          <span class="tag">Blur detection (Laplacian)</span>
+          <span class="tag">Duplicate filtering (MAD)</span>
+          <span class="tag">DJI SRT GPS parsing</span>
+        </div>
+      </div>
+      <div class="step-col">
+        <h4>Output</h4>
+        <div class="tags">
+          <span class="tag green">~900 clean JPEG frames</span>
+          <span class="tag green">frame_metadata.json</span>
+          <span class="tag green">{lat, lon, alt, heading} per frame</span>
+        </div>
+      </div>
+    </div>
+    <div class="io-bar">
+      <span class="io-label">54,000 frames</span>→
+      <span class="tag accent">~900 quality frames (98% reduction)</span>
+    </div>
+  </div>
+  <div class="arrow"></div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="timing">~10-30 min</div>
+    <div class="step-header">
+      <div class="step-num">02</div>
+      <div>
+        <div class="step-title">Georeferencing & Orthomosaic</div>
+        <div class="step-subtitle">02_georeference.py</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="step-col">
+        <h4>Operations</h4>
+        <div class="tags">
+          <span class="tag">GPS → pixel mapping (equirectangular)</span>
+          <span class="tag">Frame footprint estimation from altitude + FOV</span>
+          <span class="tag">Weighted frame blending</span>
+          <span class="tag">SIFT feature stitching (fallback)</span>
+          <span class="tag">GeoTIFF export (rasterio)</span>
+        </div>
+      </div>
+      <div class="step-col">
+        <h4>Output</h4>
+        <div class="tags">
+          <span class="tag green">orthomosaic_{period}.png</span>
+          <span class="tag green">orthomosaic_{period}.tif (georeferenced)</span>
+          <span class="tag green">stitch_metadata.json</span>
+        </div>
+        <div class="tags" style="margin-top:6px">
+          <span class="tag yellow">Resolution: 5cm/px</span>
+          <span class="tag yellow">Full site top-down view</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow"></div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="timing">~5-20 min</div>
+    <div class="step-header">
+      <div class="step-num">03</div>
+      <div>
+        <div class="step-title">Semantic Segmentation</div>
+        <div class="step-subtitle">03_segment.py</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="step-col">
+        <h4>11 Construction Classes</h4>
+        <div class="tags">
+          <span class="tag accent">Concrete structure</span>
+          <span class="tag accent">Steel rebar</span>
+          <span class="tag accent">Formwork</span>
+          <span class="tag yellow">Earthwork</span>
+          <span class="tag red">Equipment</span>
+          <span class="tag yellow">Material stockpile</span>
+          <span class="tag green">Vegetation</span>
+          <span class="tag">Road surface</span>
+          <span class="tag">Water body</span>
+          <span class="tag red">Workers</span>
+        </div>
+      </div>
+      <div class="step-col">
+        <h4>Two Modes</h4>
+        <div class="tags">
+          <span class="tag green">Heuristic (HSV + texture) — works instantly</span>
+          <span class="tag purple">Mask2Former / SAM — fine-tuned deep model</span>
+        </div>
+        <h4 style="margin-top:10px">Output</h4>
+        <div class="tags">
+          <span class="tag green">segmentation_mask_{period}.png</span>
+          <span class="tag green">segmentation_overlay_{period}.jpg</span>
+          <span class="tag green">class_areas_{period}.json (m² per class)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow"></div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="timing">~2-5 min</div>
+    <div class="step-header">
+      <div class="step-num">04</div>
+      <div>
+        <div class="step-title">Change Detection</div>
+        <div class="step-subtitle">04_change_detection.py</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="step-col">
+        <h4>Change Types Detected</h4>
+        <div class="tags">
+          <span class="tag green">🟢 New construction</span>
+          <span class="tag red">🔴 Demolition / removal</span>
+          <span class="tag yellow">🟠 Equipment movement</span>
+          <span class="tag accent">🔵 Earthwork progress</span>
+        </div>
+        <h4 style="margin-top:10px">Method</h4>
+        <div class="tags">
+          <span class="tag">SIFT homography alignment</span>
+          <span class="tag">Pixel-level mask diff</span>
+          <span class="tag">Morphological noise removal</span>
+        </div>
+      </div>
+      <div class="step-col">
+        <h4>Output</h4>
+        <div class="tags">
+          <span class="tag green">change_map_prev_curr.png</span>
+          <span class="tag green">change_heatmap_prev_curr.png</span>
+          <span class="tag green">comparison_prev_curr.jpg</span>
+          <span class="tag green">change_stats.json</span>
+        </div>
+        <h4 style="margin-top:10px">Per Zone</h4>
+        <div class="tags">
+          <span class="tag accent">Δ construction m² per zone</span>
+          <span class="tag accent">Status: progressing / stalled / regressed</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow"></div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="timing">&lt;1 min</div>
+    <div class="step-header">
+      <div class="step-num">05</div>
+      <div>
+        <div class="step-title">Progress Metrics & KPIs</div>
+        <div class="step-subtitle">05_metrics.py</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="step-col">
+        <h4>Computed Metrics</h4>
+        <div class="tags">
+          <span class="tag accent">Overall completion % (weighted)</span>
+          <span class="tag accent">Activity score (0-100)</span>
+          <span class="tag accent">Per-zone completion %</span>
+          <span class="tag yellow">Δ construction m² per zone</span>
+          <span class="tag red">Alert detection (stalled / regressed)</span>
+        </div>
+      </div>
+      <div class="step-col">
+        <h4>Timeline Tracking</h4>
+        <div class="tags">
+          <span class="tag green">timeline_data.json (cumulative all periods)</span>
+          <span class="tag green">progress_metrics_{period}.json</span>
+        </div>
+        <h4 style="margin-top:10px">Alerts Generated</h4>
+        <div class="tags">
+          <span class="tag red">⚠️ Stalled zone</span>
+          <span class="tag red">🔴 Regression</span>
+          <span class="tag green">🚀 Rapid progress</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow"></div>
+
+  <!-- STEP 6 -->
+  <div class="step">
+    <div class="timing">~1-2 min</div>
+    <div class="step-header">
+      <div class="step-num">06</div>
+      <div>
+        <div class="step-title">Report Generation</div>
+        <div class="step-subtitle">06_report_generator.py</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="step-col">
+        <h4>Report Sections</h4>
+        <div class="tags">
+          <span class="tag">Executive Summary (KPIs)</span>
+          <span class="tag">Before/After orthomosaics</span>
+          <span class="tag">Segmentation overlays</span>
+          <span class="tag">Change detection maps</span>
+          <span class="tag">Zone progress table</span>
+          <span class="tag">Timeline charts</span>
+          <span class="tag">Alerts & observations</span>
+        </div>
+      </div>
+      <div class="step-col">
+        <h4>Output Formats</h4>
+        <div class="tags">
+          <span class="tag green">📄 PDF (ReportLab)</span>
+          <span class="tag green">🌐 HTML (standalone, Chart.js)</span>
+        </div>
+        <h4 style="margin-top:10px">Includes</h4>
+        <div class="tags">
+          <span class="tag accent">Embedded base64 images</span>
+          <span class="tag accent">Interactive timeline charts</span>
+          <span class="tag accent">Color-coded zone table</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+  <div class="data-flow">
+    📊 OUTPUT &nbsp;|&nbsp; progress_report_{period}.pdf + progress_report_{period}.html
+  </div>
+
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Core Processing</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> File Output</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> Configurable</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> Optional ML Model</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Alert / Warning</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,91 @@
+# pipeline_config.yaml
+# Metro Construction Progress Tracking - Configuration
+
+# ─── VIDEO SETTINGS ──────────────────────────────────────────────────────────
+video:
+  fps: 30
+  duration_minutes: 30
+  resolution: [3840, 2160]          # 4K default; change to [1920,1080] for 1080p
+  frame_extract_interval_sec: 2     # Extract 1 frame every N seconds (900 frames from 30min)
+  stabilization: true               # Apply video stabilization before extraction
+
+# ─── PREPROCESSING ────────────────────────────────────────────────────────────
+preprocessing:
+  blur_threshold: 100               # Laplacian variance; frames below this are blurry → skip
+  duplicate_ssim_threshold: 0.97    # Skip frames too similar to previous (SSIM score)
+  resize_output: [1920, 1080]       # Resize extracted frames for processing
+
+# ─── GEOREFERENCING ───────────────────────────────────────────────────────────
+georeferencing:
+  method: "feature_matching"        # Options: feature_matching | gps_metadata | hybrid
+  gps_from_video_metadata: true     # Parse GPS from drone video EXIF/SRT file
+  reference_map_crs: "EPSG:32643"   # UTM Zone 43N (India); change per your region
+  tile_overlap: 0.3                 # Overlap between adjacent frame tiles
+  output_resolution_cm_per_px: 5   # Target orthomosaic ground resolution
+
+# ─── SEGMENTATION ─────────────────────────────────────────────────────────────
+segmentation:
+  model: "mask2former"              # Options: mask2former | sam | custom
+  model_weights: "models/segmentation_model/metro_seg_v1.pth"
+  confidence_threshold: 0.6
+  classes:
+    0: "background"
+    1: "concrete_structure"         # Pillars, beams, slabs, walls
+    2: "steel_rebar"                # Exposed rebar/reinforcement
+    3: "formwork"                   # Shuttering/molds
+    4: "earthwork"                  # Excavated/disturbed soil
+    5: "road_surface"               # Existing road/paved surface
+    6: "equipment"                  # Cranes, JCBs, mixers
+    7: "material_stockpile"         # Aggregates, sand, concrete blocks
+    8: "water_body"                 # Waterlogging, drainage
+    9: "vegetation"                 # Trees, grass (unchanged baseline)
+    10: "workers"                   # Human activity indicator
+
+# ─── CHANGE DETECTION ─────────────────────────────────────────────────────────
+change_detection:
+  alignment_method: "homography"    # Align current orthomosaic to previous
+  diff_threshold: 0.15              # Pixel-level change sensitivity (0–1)
+  min_change_area_sqm: 10          # Ignore change patches smaller than this
+  highlight_colors:
+    new_construction: [0, 255, 0]   # Green
+    demolition_removal: [255, 0, 0] # Red
+    equipment_movement: [0, 165, 255] # Orange
+    no_change: [128, 128, 128]      # Gray
+
+# ─── ZONE DEFINITIONS ─────────────────────────────────────────────────────────
+# Define metro line stations/segments as named zones (pixel coords in reference orthomosaic)
+# Replace with your actual zone coordinates
+zones:
+  - id: "Z01"
+    name: "Station A - Foundation"
+    bbox: [0, 0, 406, 639]
+  - id: "Z02"
+    name: "Viaduct Section"
+    bbox: [406, 0, 812, 639]
+  - id: "Z03"
+    name: "Depot Area"
+    bbox: [812, 0, 1218, 639]
+  # Add more zones as needed
+
+# ─── PROGRESS METRICS ─────────────────────────────────────────────────────────
+metrics:
+  planned_completion_map: "data/planned_zones.geojson"  # Optional: planned vs actual
+  track_classes_for_progress:
+    - "concrete_structure"
+    - "earthwork"
+    - "formwork"
+
+# ─── REPORT ───────────────────────────────────────────────────────────────────
+report:
+  output_format: ["pdf", "html"]
+  logo_path: "assets/logo.png"
+  project_name: "Metro Rail Construction"
+  contractor_name: ""
+  include_sections:
+    - executive_summary
+    - orthomosaic_comparison
+    - zone_progress_table
+    - change_heatmap
+    - activity_metrics
+    - timeline_chart
+    - raw_frame_samples
