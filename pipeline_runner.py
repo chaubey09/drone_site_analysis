@@ -18,17 +18,17 @@ import importlib.util
 from pathlib import Path
 from datetime import datetime
 
-# ── Fix Windows console Unicode crash (box-drawing chars like ─ etc.) ─────────
+# Fix Windows console Unicode crash
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-# ── Make sure the folder containing pipeline_runner.py is on sys.path ─────────
+# Make sure the folder containing pipeline_runner.py is on sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
 
-# ── Logging: UTF-8 file + console ─────────────────────────────────────────────
+# Logging: UTF-8 file + console
 log_handlers = [
     logging.FileHandler("pipeline.log", encoding="utf-8"),
     logging.StreamHandler(sys.stdout),
@@ -41,10 +41,8 @@ logging.basicConfig(
 log = logging.getLogger("pipeline_runner")
 
 
-# ── Helper: load a sibling .py file as a module ───────────────────────────────
-
 def load_module(filename: str):
-    """Load one of the pipeline step files by filename (e.g. '01_preprocess.py')."""
+    """Load one of the pipeline step files by filename."""
     path = os.path.join(SCRIPT_DIR, filename)
     if not os.path.exists(path):
         raise FileNotFoundError(
@@ -67,13 +65,13 @@ def load_config(config_path: str = "config/pipeline_config.yaml") -> dict:
         return yaml.safe_load(f)
 
 
-# ── Main period runner ────────────────────────────────────────────────────────
-
 def run_period(curr_period: str, prev_period,
                video_path, srt_path,
                config: dict, args) -> bool:
 
     processed_dir = "data/processed"
+    structures_path = "config/structures.json"
+
     log.info("=" * 60)
     log.info(f"PERIOD: {curr_period}  |  prev: {prev_period or 'N/A'}")
     log.info("=" * 60)
@@ -82,7 +80,7 @@ def run_period(curr_period: str, prev_period,
     # STEP 1 - Preprocess
     if not args.skip_preprocess:
         if not video_path:
-            log.error("--video is required. Add --skip-preprocess to skip this step.")
+            log.error("--video is required. Add --skip-preprocess to skip.")
             return False
         if not os.path.exists(video_path):
             log.error(f"Video file not found: {os.path.abspath(video_path)}")
@@ -136,17 +134,35 @@ def run_period(curr_period: str, prev_period,
     else:
         log.info("STEP 6: SKIPPED")
 
+    # STEP 7 - Structure Tracker
+    if not args.skip_structures:
+        if os.path.exists(structures_path):
+            log.info("STEP 7: Individual Structure Tracking")
+            mod = load_module("07_structure_tracker.py")
+            mod.track_structures(curr_period, prev_period, processed_dir,
+                                  config, structures_path)
+        else:
+            log.info("STEP 7: SKIPPED (no structures.json found)")
+            log.info("  To set up structure tracking, run:")
+            log.info("  python 07_structure_tracker.py --create-template "
+                     f"--ortho-size 1218 639")
+            log.info("  OR use the interactive marker tool:")
+            log.info(f"  python 07_structure_tracker.py --mark "
+                     f"--ortho data/processed/{curr_period}/orthomosaic_{curr_period}.png")
+    else:
+        log.info("STEP 7: SKIPPED")
+
     elapsed = (datetime.now() - start_time).total_seconds()
-    log.info(f"Period {curr_period} complete in {elapsed:.0f}s")
+    log.info("=" * 60)
+    log.info(f"DONE - Period {curr_period} complete in {elapsed:.0f}s")
+    log.info("=" * 60)
     return True
 
-
-# ── Batch runner ──────────────────────────────────────────────────────────────
 
 def run_batch(config: dict, args):
     raw_dir = "data/raw"
     if not os.path.exists(raw_dir):
-        log.error("data/raw directory not found. Create it and place period folders inside.")
+        log.error("data/raw directory not found.")
         return
 
     periods = sorted([
@@ -167,7 +183,6 @@ def run_batch(config: dict, args):
             if candidates:
                 video_path = str(candidates[0])
                 break
-
         srt_path = None
         srt_candidates = list(Path(period_dir).glob("*.srt"))
         if srt_candidates:
@@ -181,8 +196,6 @@ def run_batch(config: dict, args):
             break
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
-
 def main():
     parser = argparse.ArgumentParser(
         description="Metro Construction Progress Pipeline",
@@ -195,30 +208,27 @@ Examples:
   Second period with comparison:
     python pipeline_runner.py --curr 2024_03 --prev 2024_01 --video drone_video.mp4
 
-  With DJI SRT GPS file:
-    python pipeline_runner.py --curr 2024_03 --prev 2024_01 --video DJI_0001.mp4 --srt DJI_0001.srt
-
   Batch (auto-finds videos in data/raw/<period>/ folders):
     python pipeline_runner.py --batch
 
-  Redo only the report:
-    python pipeline_runner.py --curr 2024_03 --prev 2024_01
-      --skip-preprocess --skip-georeference --skip-segment --skip-changes --skip-metrics
+  Set up structure tracking (run once before first period):
+    python 07_structure_tracker.py --create-template --ortho-size 1218 639
+    python 07_structure_tracker.py --mark --ortho data/processed/2024_01/orthomosaic_2024_01.png
         """
     )
     parser.add_argument("--curr",   help="Current period ID e.g. 2024_03")
-    parser.add_argument("--prev",   default=None, help="Previous period ID")
-    parser.add_argument("--video",  default=None, help="Path to drone video (.mp4/.mov)")
-    parser.add_argument("--srt",    default=None, help="DJI SRT GPS file (optional)")
+    parser.add_argument("--prev",   default=None)
+    parser.add_argument("--video",  default=None)
+    parser.add_argument("--srt",    default=None)
     parser.add_argument("--config", default="config/pipeline_config.yaml")
-    parser.add_argument("--batch",  action="store_true",
-                        help="Process all periods in data/raw/")
+    parser.add_argument("--batch",  action="store_true")
     parser.add_argument("--skip-preprocess",   action="store_true", dest="skip_preprocess")
     parser.add_argument("--skip-georeference", action="store_true", dest="skip_georeference")
     parser.add_argument("--skip-segment",      action="store_true", dest="skip_segment")
     parser.add_argument("--skip-changes",      action="store_true", dest="skip_changes")
     parser.add_argument("--skip-metrics",      action="store_true", dest="skip_metrics")
     parser.add_argument("--skip-report",       action="store_true", dest="skip_report")
+    parser.add_argument("--skip-structures",   action="store_true", dest="skip_structures")
 
     args = parser.parse_args()
 
